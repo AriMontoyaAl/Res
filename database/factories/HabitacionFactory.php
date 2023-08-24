@@ -18,3 +18,4 @@ class HabitacionFactory extends Factory
         ];
     }
 }
+

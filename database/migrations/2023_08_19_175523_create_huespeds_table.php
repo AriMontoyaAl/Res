@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nombre_del_huesped');
             $table->string('apellido_del_huesped');
             $table->string('correo_electronico')->uniqued();
-            $table->integer('telefono')->uniqued();
+            $table->string('telefono')->uniqued();
             $table->timestamps();
         });
     }

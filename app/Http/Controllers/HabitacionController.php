@@ -9,10 +9,23 @@ use Illuminate\Support\Facades\DB;
 
 class HabitacionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $datos = Habitacion::paginate(10);
-        return view('habitacion.index', compact('datos'));
+        $texto = trim($request->get('texto'));
+
+        $datos = DB::table('habitacions')
+                    ->select('id', 'numero_de_habitacion', 'tipo_de_habitacion', 'precio')
+                    ->where(function ($query) use($texto){
+                        $query
+                        ->orwhere('numero_de_habitacion', 'LIKE', '%'.$texto.'%')
+                        ->orwhere('tipo_de_habitacion', 'LIKE', '%'.$texto.'%')
+                        ->orwhere('precio', 'LIKE', '%'.$texto.'%');
+                    })
+                    ->orderBy('id', 'asc')
+                    ->paginate(10);
+                    
+        return view('habitacion.index', compact('datos', 'texto'));
     }
     
     public function crear()

@@ -11,17 +11,23 @@ use Illuminate\Support\Facades\DB;
 
 class ReservaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $reservas = Reserva::orderby('id')->get();
+
+        $texto = trim($request->get('texto'));
 
         $reservas = Reserva::join('habitacions', 'habitacions.id', '=','reservas.id_habitacion')
                             ->join('huespeds', 'huespeds.id', '=', 'reservas.id_huesped')
                             ->select('reservas.id', 'reservas.fecha_de_entrada', 'reservas.fecha_de_salida', 'reservas.numero_de_huespedes', 'habitacions.numero_de_habitacion', 'huespeds.nombre_del_huesped')
-                            ->orderBy('id', 'asc')
-                            ->paginate(10);
+                            ->where(function ($query) use($texto){
+                                $query
+                                ->orwhere('habitacions.numero_de_habitacion', 'LIKE', '%'.$texto.'%')
+                                ->orwhere('huespeds.nombre_del_huesped', 'LIKE', '%'.$texto.'%')
+                                ->orwhere('reservas.fecha_de_entrada', 'LIKE', '%'.$texto.'%');
+                            })->orderby('id')->paginate(10);
 
-        return view('reserva.index', compact('reservas'));
+        return view('reserva.index', compact('reservas', 'texto'));
     }
 
     public function crear()
@@ -49,12 +55,27 @@ class ReservaController extends Controller
     
     public function ver($id)
     {
-        $habitacion = Habitacion::orderBy('id')->pluck('numero_de_habitacion', 'id')->toArray();
-        $reservas = Reserva::with('habitacion')->findOrFail($id);
+        /*$reservas = DB::table('reservas')
+                    ->select('reservas.id', 'reservas.fecha_de_entrada', 'reservas.fecha_de_salida', 
+                    'reservas.numero_de_huespedes', 'habitacions.numero_de_habitacion', 'huespeds.nombre_del_huesped')
+                    ->join('huespeds', 'reservas.id_huesped', '=', 'huespeds.id')
+                    ->join('habitacions', 'reservas.id_habitacion', '=', 'habitacions.id')
+                    ->where('id', $id);
+                    
 
+        return view('reserva.ver', compact('reservas'));*/
+
+        $habitacion = Habitacion::orderBy('id')->pluck('numero_de_habitacion', 'id')->toArray();
         $huesped = Huesped::orderBy('id')->pluck('nombre_del_huesped', 'id')->toArray();
-        $reservas = Reserva::with('Huesped')->findOrFail($id);
-        return view('reserva.crear', compact('habitacion', 'huesped', 'reservas'));
+
+        $reservas = Reserva::with('habitacions')->findOrFail($id);
+        $reservas = Reserva::with('Huespeds')->findOrFail($id);
+
+        return view('reserva.ver', [
+            'habitacion'=>$habitacion,
+            'huesped'=>$huesped,
+            'reservas'=>$reservas
+        ]);
     }
     
     public function editar($id)
@@ -62,13 +83,17 @@ class ReservaController extends Controller
         $habitacion = Habitacion::orderBy('id')->pluck('numero_de_habitacion', 'id')->toArray();
         $huesped = Huesped::orderBy('id')->pluck('nombre_del_huesped', 'id')->toArray();
 
-        $reservas = Reserva::with('habitacions')->findOrFail($id);
-        $reservas = Reserva::with('Huespeds')->findOrFail($id);
+        $reservas = Reserva::with(['habitacions', 'Huespeds'])->find($id);
+
+        $habitacion_id = $reservas->habitacions->id;
+        $huesped_id = $reservas->Huespeds->id;
 
         return view('reserva.crear', [
             'habitacion'=>$habitacion,
             'huesped'=>$huesped,
-            'reservas'=>$reservas
+            'reservas'=>$reservas,
+            'habitacion_id'=>$habitacion_id,
+            'huesped_id'=>$huesped_id
         ]);
     }
     

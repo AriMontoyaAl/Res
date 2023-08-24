@@ -5,13 +5,27 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ValidacionHuespedes;
 use App\Models\Huesped;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HuespedController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $datas = Huesped::orderby('id')->get();
-        return view('huesped.index', compact('datas'));
+        $texto = trim($request->get('texto'));
+
+        $datas = DB::table('huespeds')
+                    ->select('id', 'nombre_del_huesped', 'apellido_del_huesped', 'correo_electronico', 'telefono')
+                    ->where(function ($query) use($texto){
+                        $query
+                        ->orwhere('nombre_del_huesped', 'LIKE', '%'.$texto.'%')
+                        ->orwhere('telefono', 'LIKE', '%'.$texto.'%')
+                        ->orwhere('apellido_del_huesped', 'LIKE', '%'.$texto.'%');
+                    })
+                    ->orderBy('id', 'asc')
+                    ->paginate(10);
+                    
+        return view('huesped.index', compact('datas', 'texto'));
     }
     
     public function crear()
