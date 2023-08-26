@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Habitacion;
+use App\Models\Huesped;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,11 @@ class ReservaFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'fecha_de_entrada'=>$this->faker->date(),
+            'fecha_de_salida'=>$this->faker->date(),
+            'id_habitacion'=>Habitacion::factory(),
+            'id_huesped'=>Huesped::factory(),
+            'numero_de_huespedes'=>$this->faker->numberBetween(1,15),
         ];
     }
 }
